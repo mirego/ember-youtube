@@ -117,26 +117,26 @@ export default Component.extend({
 		}
 	}).drop(),
 
-	// A promise that is resolved when window.onYouTubeIframeAPIReady is called.
+	// A promise that is resolved when YT is loaded.
 	// The promise is resolved with a reference to window.YT object.
 	loadYouTubeApi() {
-		return new RSVP.Promise((resolve) => {
-			let previous;
-			previous = window.onYouTubeIframeAPIReady;
+		return new RSVP.Promise((resolve, reject) => {
+			let checkCount = 0;
+			const checkYT = setInterval(() => {
+				checkCount++;
 
-			// The API will call this function when page has finished downloading
-			// the JavaScript for the player API.
-			window.onYouTubeIframeAPIReady = () => {
-				if (previous) {
-					previous();
+				if (checkCount == 50) {
+					reject();
+					clearInterval(checkYT);
 				}
-				resolve(window.YT);
-			};
 
-			if (window.YT && window.YT.loaded) {
-				// If already loaded, make sure not to load the script again.
-				resolve(window.YT);
-			} else {
+				if (window.YT && window.YT.loaded) {
+					resolve(window.YT);
+					clearInterval(checkYT);
+				}
+			}, 100);
+
+			if (!window.YT || !window.YT.loaded) {
 				$.getScript('https://www.youtube.com/iframe_api');
 			}
 		});
